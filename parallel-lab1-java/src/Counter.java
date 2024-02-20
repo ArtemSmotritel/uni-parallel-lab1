@@ -1,16 +1,30 @@
-public class Counter implements Runnable {
+public class Counter implements Runnable, Subscriber {
     private static int ID = 0;
     private final int id;
-    private final Stopper stopper;
     private final int step;
     private long sum;
+    private volatile boolean isStopped = false;
     private long additiveCount;
-    public Counter(Stopper stopper, int step) {
-        this.stopper = stopper;
+
+    public Counter(int step) {
         this.step = step;
         synchronized (this) {
             id = ++ID;
         }
+    }
+
+    @Override
+    public void run() {
+        while (!isStopped) {
+            sum += step;
+            additiveCount++;
+        }
+        System.out.println(this);
+    }
+
+    @Override
+    public void stop() {
+        isStopped = true;
     }
 
     @Override
@@ -24,11 +38,17 @@ public class Counter implements Runnable {
     }
 
     @Override
-    public void run() {
-        while (!stopper.isStopped()) {
-            sum += step;
-            additiveCount++;
-        }
-        System.out.println(this);
+    public int hashCode() {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        Counter counter = (Counter) obj;
+        return id == counter.id;
     }
 }
